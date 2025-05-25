@@ -1,0 +1,47 @@
+--Let's look at different types of degrees and their data format
+SELECT DISTINCT DegreeType
+FROM degrees
+ORDER BY 1;
+
+--Let's find an average amount of the bachelor's degree over the years
+SELECT AVG(Count)
+FROM degrees
+WHERE (DegreeType="BACHELOR'S" or DegreeType='Baccalaureate') AND AcademicYear LIKE '200%'
+GROUP BY DegreeType;
+
+--Let's find a maximum amount of master's degrees taking into account different format teh data is presented in
+SELECT AcademicYear, DegreeType, MAX(Count)
+FROM degrees
+WHERE UPPER(DegreeType) LIKE 'MASTE%';
+
+--Let's find top ten Academic years for JD degrees with amount of degrees higher than average
+ SELECT DegreeType, AcademicYear, Count
+FROM degrees
+WHERE (Count > (SELECT AVG(Count) 
+               FROM degrees
+			   WHERE DegreeType LIKE '%J%D%')) AND (DegreeType LIKE '%J%D%')
+ORDER BY 3 DESC
+LIMIT 10;
+
+--Let's find average amount of degrees during post Covid years where average number is higher than 5000:
+SELECT DegreeType, AVG(Count) as post_covid_avg
+FROM degrees 
+WHERE (AcademicYear IN (SELECT AcademicYear FROM degrees WHERE AcademicYear LIKE '202%'))
+       AND DegreeType <>'Sum'
+GROUP BY 1
+HAVING post_covid_avg > 5000
+ORDER BY 2 DESC;
+
+--The following query is to deponstrate (self) JOIN use. Let's find the change in the number of Certificates degree from year to year considering the Academic Year format:
+WITH t1 AS
+(SELECT substr(AcademicYear, 6,4) AS yend, Count, DegreeType
+FROM degrees),
+t2 AS
+(SELECT substr(AcademicYear, 1,4) AS ybeg, Count, DegreeType
+FROM degrees)
+
+SELECT t1.yend, (t1.Count - t2.Count) AS diff
+FROM t1
+JOIN t
+ON t1.yend=t2.ybeg
+WHERE t1.DegreeType='CERTIFICATE' AND t2.DegreeType='CERTIFICATE';
